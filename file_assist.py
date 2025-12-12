@@ -5,7 +5,7 @@ import logging
 
 # the directory in which files are sorted
 start_dir = "/home/pc/download"
-# the directory to which sorted files are moved
+# the beginning of the directory to which folders with sorted files are moved
 gen_dir = "/home/pc/"
 
 logging.basicConfig(level = logging.INFO, filename = "file_move_log.log", format = "%(asctime)s %(levelname)s %(message)s")
@@ -22,16 +22,22 @@ extensions_set = {
     "other": []
 }
 
-for types, extension in extensions_set.items():
-    if not os.path.isdir(gen_dir+types):
-        os.mkdir(gen_dir+types)
-    for filename in file_list:
-        ex_file = os.path.splitext(filename)[-1]
-        if ex_file in extension:
-            shutil.move(start_dir + "/" + filename, gen_dir+types)
-            logging.info(f"Файл {start_dir + "/" + filename} был перемещен в {gen_dir+types}")
-        else:
-             logging.warning(f"Файл {start_dir + "/" + filename} не был отсортирован ")
+categories = list(extensions_set.keys())
+for category in categories:
+    category_path = os.path.join(gen_dir, category)
+    if not os.path.isdir(category_path):
+        os.mkdir(category_path)
 
-
-
+for filename in file_list:
+    file_path = os.path.join(start_dir, filename)
+    if os.path.isfile(file_path):
+        ex_file = os.path.splitext(filename)[-1].lower()
+        moved = False
+        for category, extensions in extensions_set.items():
+            if ex_file in extensions:
+                shutil.move(file_path, os.path.join(gen_dir, category))
+                logging.info(f"Файл {file_path} был перемещен в {os.path.join(gen_dir, category)}")
+                moved = True
+                break
+        if not moved:
+            logging.warning(f"Файл {file_path} перемещен в {os.path.join(gen_dir, "other")} (несортированный)")
